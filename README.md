@@ -1,43 +1,46 @@
 <div align="center">
 
-# 🛡️ ultra-sandbox
+# 🧪 ultra-sandbox
 
-**A hardened, session-scoped build → test → repair sandbox for Claude, over MCP.**
+**Real build-and-run sandboxes for Claude — every language, plus Xcode on a remote AWS Mac, with a live dashboard.**
 
-[![CI](https://github.com/YOUR_USERNAME/ultra-sandbox/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/ultra-sandbox/actions/workflows/ci.yml)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Docker](https://img.shields.io/badge/isolation-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![CI](https://github.com/mephisto1122/ultra-sandbox/actions/workflows/ci.yml/badge.svg)](https://github.com/mephisto1122/ultra-sandbox/actions/workflows/ci.yml)
+[![22 languages](https://img.shields.io/badge/languages-22-3776AB)](LANGUAGES.md)
+[![Docker](https://img.shields.io/badge/local-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![MCP](https://img.shields.io/badge/protocol-MCP-000000?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
-[![AWS EC2 Mac](https://img.shields.io/badge/Xcode%20builds-EC2%20Mac-FF9900?logo=amazonwebservices&logoColor=white)](https://aws.amazon.com/ec2/instance-types/mac/)
+[![AWS EC2 Mac](https://img.shields.io/badge/Xcode-EC2%20Mac-FF9900?logo=amazonwebservices&logoColor=white)](https://aws.amazon.com/ec2/instance-types/mac/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Claude writes code → the sandbox builds and tests it in a locked-down container →
-structured logs come back → Claude patches → repeat until green, or a hard cap says
-**"gave up"** — loudly, never silently.
+Out of the box, Claude can't compile Go, run your pytest suite, or touch Xcode.
+ultra-sandbox gives it all of that: an MCP server where Claude **creates a sandbox,
+writes code, builds it, runs the tests, reads the real logs, and patches until green** —
+across 22 languages locally and Swift/Xcode on a remote Apple machine.
 
 </div>
 
 ---
 
-## Why
-
-Letting an AI compile and run code on your machine is useful and scary. ultra-sandbox
-makes the useful part easy and the scary part small: every build runs inside a
-network-less, capability-dropped, read-only-rootfs Docker container that exists only
-for the current session.
+## What it gives Claude
 
 | | |
 |---|---|
-| 🐳 **Docker driver** (local, 22 languages) | go · c · cpp · rust · zig · haskell · crystal · swiftpm · python · node · typescript · deno · ruby · php · perl · lua · elixir · jvm · kotlin · scala · dotnet · dart |
-| 🍎 **SSH-Mac driver** (remote EC2 Mac) | swift (SwiftPM) · xcodeproj · objc |
-| 📚 **Docs search** | allowlisted first-party documentation, cached per session |
-| 📊 **Dashboard** | `localhost:8787` — sandboxes, logs, repair-loop trace, Mac cost clock |
+| 🌍 **22 languages, locally** | go · c · cpp · rust · zig · haskell · crystal · swiftpm · python · node · typescript · deno · ruby · php · perl · lua · elixir · jvm · kotlin · scala · dotnet · dart — each in its own toolchain container |
+| 🍎 **Xcode / Swift on a remote AWS Mac** | `swift` · `xcodeproj` · `objc` built over SSH on an EC2 Mac — the one thing that *can't* run in a Linux container |
+| 🔁 **A real repair loop** | build → read stderr → patch → rebuild, until green or a hard cap says **"gave up"** — loudly, never silently |
+| 📚 **Docs search** | current first-party docs mid-loop, so Claude checks the API instead of guessing |
+| 📊 **Live dashboard** | `localhost:8787` — every sandbox, its status, logs, the repair-loop trace, and the Mac-host cost clock |
 
-## Security, by default
+Each sandbox spins up per session and is torn down when you're done. It runs on your
+machine with sensible isolation (network-off by default, dropped privileges, read-only
+rootfs) so you can actually trust it — the details are in [SECURITY.md](SECURITY.md),
+but the point of the tool is the capability above, not the sandboxing.
 
-Every sandbox container starts with **no network**, `--cap-drop ALL`,
-`no-new-privileges`, a **read-only root filesystem** (only a per-sandbox volume at
-`/work` and a capped tmpfs at `/tmp` are writable), a non-root user, memory/CPU/PID
+## Under the hood
+
+Every sandbox container starts with **no network** (opt in per sandbox with
+`allow_network`), `--cap-drop ALL`, `no-new-privileges`, a **read-only root filesystem**
+(only a per-sandbox volume at `/work` and a capped tmpfs at `/tmp` are writable), a
+non-root user, memory/CPU/PID
 limits, and **no host mounts** (file sync is `docker cp` snapshots). `exec_command`
 always executes *inside* the container.
 
