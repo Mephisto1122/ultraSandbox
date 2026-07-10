@@ -1,0 +1,14 @@
+.venv/
+venv/
+server/lib/
+server/venv/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/
+config.toml
+*.mcpb
+.ultra-sandbox/
+build/
+dist/
+*.egg-info/

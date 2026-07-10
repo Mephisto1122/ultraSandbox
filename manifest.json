@@ -1,0 +1,66 @@
+{
+  "manifest_version": "0.4",
+  "name": "ultra-sandbox",
+  "display_name": "Ultra-sandbox",
+  "version": "0.2.0",
+  "description": "Persistent multi-language build/test/repair sandbox for Claude (local Docker + remote EC2 Mac), with a status dashboard and allowlisted docs search.",
+  "long_description": "Ultra-sandbox gives Claude a persistent build \u2192 test \u2192 repair loop across many languages. Claude writes code, the sandbox builds and tests it in an isolated environment, structured logs come back, and Claude patches until the build is green or a hard attempt cap is reached. Portable toolchains (go, cpp, node, python, rust, jvm, ruby, php, dotnet) run in local Docker containers; Swift/Objective-C/Xcode targets run over SSH on an EC2 Mac dedicated host. A read-only dashboard at http://localhost:8787 shows sandboxes, logs, the repair-loop trace, and a Mac-host cost clock. A docs-search tool looks up current first-party framework documentation so Claude checks the docs instead of guessing.",
+  "author": {
+    "name": "ultra-sandbox"
+  },
+  "server": {
+    "type": "uv",
+    "entry_point": "ultra_sandbox/__main__.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "-m", "ultra_sandbox"],
+      "env": {
+        "ULTRA_SANDBOX_CONFIG": "${user_config.config_path}",
+        "BRAVE_API_KEY": "${user_config.brave_api_key}",
+        "ULTRA_SANDBOX_DASHBOARD_PORT": "${user_config.dashboard_port}"
+      }
+    }
+  },
+  "tools": [
+    {"name": "create_sandbox", "description": "Create a persistent build sandbox for a project in a given language."},
+    {"name": "write_files", "description": "Write files (relative path -> full content) into a sandbox."},
+    {"name": "run_build", "description": "Build the project with the toolchain's native command; returns logs, exit code, and repair-loop progress."},
+    {"name": "run_tests", "description": "Run the test suite; returns failing output and repair-loop progress."},
+    {"name": "exec_command", "description": "Run an arbitrary shell command inside the sandbox."},
+    {"name": "get_logs", "description": "Read captured build/test/exec logs for a sandbox."},
+    {"name": "search_docs", "description": "Search current first-party framework/language documentation (allowlisted)."},
+    {"name": "destroy_sandbox", "description": "Tear down a sandbox."},
+    {"name": "list_sandboxes", "description": "List sandboxes with status, repair-loop length, and cost estimate."}
+  ],
+  "keywords": ["build", "test", "sandbox", "docker", "ci", "repair", "swift", "xcode"],
+  "license": "MIT",
+  "user_config": {
+    "config_path": {
+      "type": "file",
+      "title": "Config file",
+      "description": "Path to your ultra-sandbox config.toml (Mac host, docs allowlist, limits). Copy config.example.toml to config.toml and point here. Optional \u2014 defaults are used if left blank.",
+      "required": false
+    },
+    "brave_api_key": {
+      "type": "string",
+      "title": "Brave Search API key",
+      "description": "Enables the search_docs tool. Stored in your OS keychain. Optional.",
+      "sensitive": true,
+      "required": false
+    },
+    "dashboard_port": {
+      "type": "number",
+      "title": "Dashboard port",
+      "description": "Local port for the status dashboard.",
+      "default": 8787,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.11"
+    }
+  }
+}

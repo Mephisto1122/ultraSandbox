@@ -1,0 +1,46 @@
+# Copy to config.toml (same directory) or ~/.ultra-sandbox/config.toml
+# Everything has a sane default; the [mac] section is the only part you must
+# fill in before Swift/Xcode sandboxes will work.
+
+[server]
+dashboard_port = 8787        # http://localhost:8787
+max_attempts = 8             # repair-loop cap surfaced to Claude in every build/test result
+command_timeout_s = 900      # hard kill for any single build/test/exec
+data_dir = "~/.ultra-sandbox" # state.json + per-sandbox logs live here
+
+[docker]
+memory = "4g"                # per-container limit
+cpus = "2"
+image_prefix = "ultra-sandbox" # images are tagged ultra-sandbox/<lang>
+
+[security]
+ephemeral = true             # destroy all sandboxes on exit; reap stale ones at startup
+network = "none"             # container default: no network. Per-sandbox opt-in via
+                             # create_sandbox(allow_network=true) switches that one to "bridge".
+read_only_rootfs = true      # immutable rootfs; only /work (volume) and /tmp (tmpfs) writable
+pids_limit = 512             # fork-bomb guard
+tmpfs_size = "512m"          # size cap for /tmp inside containers
+
+[mac]
+# An EC2 Mac dedicated host you have already allocated (mac2.metal / mac1.metal).
+# Remember: AWS bills the dedicated host in 24-hour minimum blocks.
+host = ""                    # e.g. "ec2-3-92-10-11.compute-1.amazonaws.com"
+user = "ec2-user"
+key = "~/.ssh/mac.pem"
+remote_root = "/Users/ec2-user/ultra-sandbox"
+hourly_rate = 0.65           # published on-demand rate for your instance type; used for the local cost estimate
+test_destination = "platform=macOS"  # xcodebuild -destination for `run_tests`
+
+[docs]
+provider = "brave"           # "brave" (needs BRAVE_API_KEY env var) or "none"
+# Hard allowlist: results outside these domains are dropped.
+allowlist = [
+    "pkg.go.dev", "go.dev",
+    "developer.apple.com",
+    "developer.mozilla.org", "nodejs.org",
+    "docs.python.org", "pypi.org",
+    "doc.rust-lang.org", "docs.rs",
+    "cmake.org", "en.cppreference.com",
+    "learn.microsoft.com",
+    "docs.oracle.com", "kotlinlang.org",
+]

@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Local config & state (never commit secrets or machine state)
+config.toml
+.ultra-sandbox/
+
+# Packaging
+*.mcpb
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.coverage

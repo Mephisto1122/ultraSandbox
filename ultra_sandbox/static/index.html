@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultra-sandbox</title>
+<style>
+  :root{
+    --bg:#F5F5F7; --surface:#FFFFFF; --border:#E2E2E7;
+    --text:#1D1D1F; --text2:#6E6E73; --text3:#AEAEB2;
+    --green:#34C759; --amber:#FF9F0A; --red:#FF3B30; --gray:#C7C7CC;
+    --accent:#0071E3;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent);text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+  /* top bar */
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand h1{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .brand span{font-size:12px;color:var(--text3)}
+  .costs{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:5px 11px;border:1px solid var(--border);border-radius:99px;
+    background:var(--surface);font-size:12px;color:var(--text2);white-space:nowrap;
+  }
+  .chip b{color:var(--text);font-weight:600}
+
+  /* layout */
+  main{display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px 24px;max-width:1440px;margin:0 auto}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+
+  /* sandbox list */
+  .list h2, .detail h2{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:2px 2px 10px}
+  .card{
+    width:100%;text-align:left;background:var(--surface);
+    border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;
+  }
+  .card[aria-selected="true"]{border-color:var(--accent)}
+  .card .row1{display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--gray)}
+  .dot.passing{background:var(--green)}
+  .dot.failing{background:var(--red)}
+  .dot.building,.dot.testing{background:var(--amber)}
+  @media (prefers-reduced-motion:no-preference){
+    .dot.building,.dot.testing{animation:pulse 1.4s ease-in-out infinite}
+    @keyframes pulse{50%{opacity:.35}}
+  }
+  .card .name{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{font-size:11px;color:var(--text2);border:1px solid var(--border);border-radius:5px;padding:1px 6px}
+  .card .lastline{
+    margin-top:7px;font-family:var(--mono);font-size:11px;color:var(--text2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .empty{
+    border:1px dashed var(--border);border-radius:10px;padding:28px 18px;
+    color:var(--text2);text-align:center;background:var(--surface)
+  }
+  .empty code{font-family:var(--mono);font-size:12px}
+
+  /* detail */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+  .detail .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .detail .head .name{font-size:16px;font-weight:600}
+  .statusword{font-size:13px;color:var(--text2)}
+
+  /* repair-loop trace — the one signature element */
+  .pips{display:flex;align-items:center;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+  .pip{width:14px;height:14px;border-radius:4px;background:var(--gray)}
+  .pip.ok{background:var(--green)}
+  .pip.fail{background:var(--red)}
+  .pip.exec{background:var(--border)}
+  .pips .cap{font-size:11px;color:var(--text3);margin-left:4px}
+  .trace{list-style:none;margin-top:10px}
+  .trace li{
+    display:grid;grid-template-columns:64px 44px 70px 1fr;gap:10px;align-items:baseline;
+    padding:7px 2px;border-top:1px solid var(--border);font-size:12.5px;
+  }
+  .trace li .k{color:var(--text2)}
+  .trace li .code{font-weight:600}
+  .trace li .code.ok{color:var(--green)} .trace li .code.fail{color:var(--red)}
+  .trace li .ms{color:var(--text3);font-variant-numeric:tabular-nums}
+  .trace li .sum{font-family:var(--mono);font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gaveup{
+    margin-top:10px;padding:9px 12px;border-radius:8px;font-size:12.5px;
+    background:#FFF2F1;border:1px solid #FFD4D0;color:#B3261E;
+  }
+
+  /* logs */
+  .tabs{display:flex;gap:4px;margin-bottom:10px}
+  .tabs button{
+    padding:5px 12px;border-radius:7px;font-size:12.5px;color:var(--text2);
+  }
+  .tabs button[aria-selected="true"]{background:var(--bg);color:var(--text);font-weight:600}
+  pre.log{
+    font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--text);
+    background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    padding:12px;max-height:440px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+  }
+  .muted{color:var(--text2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><h1>Ultra-sandbox</h1><span>build · test · repair</span></div>
+  <div class="costs" id="costs" aria-live="polite"></div>
+</header>
+
+<main>
+  <section class="list" aria-label="Sandboxes">
+    <h2>Sandboxes</h2>
+    <div id="cards"></div>
+  </section>
+
+  <section class="detail" aria-label="Sandbox detail" id="detail">
+    <div class="empty">Select a sandbox to see its repair loop and logs.</div>
+  </section>
+</main>
+
+<script>
+(() => {
+  let selected = null;
+  let logKind = "build";
+  let data = { sandboxes: [], mac_host: {}, max_attempts: 8 };
+
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+
+  function statusWord(s){
+    return {passing:"Passing", failing:"Failing", building:"Building",
+            testing:"Testing", idle:"Idle", destroyed:"Destroyed"}[s] || s;
+  }
+  function hours(h){
+    const H = Math.floor(h), M = Math.round((h-H)*60);
+    return H > 0 ? `${H}h ${M}m` : `${M}m`;
+  }
+
+  function renderCosts(){
+    const m = data.mac_host || {};
+    let mac;
+    if (!m.allocated && !m.allocated_at){
+      mac = `<span class="chip">Mac host · <b>not allocated</b></span>`;
+    } else if (m.allocated){
+      mac = `<span class="chip">Mac host · <b>${hours(m.remaining_in_block_hours||0)}</b>&nbsp;left in 24h block · est. <b>$${m.estimated_cost_usd}</b></span>`;
+    } else {
+      mac = `<span class="chip">Mac host · released · billed <b>$${m.estimated_cost_usd}</b></span>`;
+    }
+    $("#costs").innerHTML =
+      `<span class="chip">Docker · <b>$0</b> (local)</span>` + mac;
+  }
+
+  function renderCards(){
+    const el = $("#cards");
+    const live = data.sandboxes;
+    if (!live.length){
+      el.innerHTML = `<div class="empty">No sandboxes yet.<br>
+        Ask Claude to <code>create_sandbox</code> and start a build.</div>`;
+      return;
+    }
+    el.innerHTML = live.map(sb => `
+      <button class="card" role="option" aria-selected="${sb.id===selected}"
+              data-id="${sb.id}">
+        <div class="row1">
+          <span class="dot ${esc(sb.status)}" aria-hidden="true"></span>
+          <span class="name">${esc(sb.project_id)}</span>
+          <span class="tag">${esc(sb.lang)}</span>
+          <span class="tag">${sb.driver === "mac" ? "EC2 Mac" : "Docker"}</span>
+        </div>
+        <div class="lastline">${esc(sb.last_log_line || statusWord(sb.status))}</div>
+      </button>`).join("");
+    el.querySelectorAll(".card").forEach(c =>
+      c.addEventListener("click", () => { selected = c.dataset.id; render(); loadLogs(); }));
+  }
+
+  function pips(sb){
+    const runs = sb.attempts.filter(a => a.kind !== "exec");
+    const cells = runs.map(a =>
+      `<span class="pip ${a.exit_code===0?"ok":"fail"}" title="${esc(a.kind)} · exit ${a.exit_code}"></span>`);
+    return `<div class="pips" aria-label="Repair loop">${cells.join("")}
+      <span class="cap">${sb.repair_attempts}/${data.max_attempts} failed rounds</span></div>`;
+  }
+
+  function renderDetail(){
+    const sb = data.sandboxes.find(s => s.id === selected);
+    const el = $("#detail");
+    if (!sb){
+      el.innerHTML = `<div class="empty">Select a sandbox to see its repair loop and logs.</div>`;
+      return;
+    }
+    const trace = sb.attempts.slice().reverse().slice(0, 30).map(a => `
+      <li>
+        <span class="k">${esc(a.kind)}</span>
+        <span class="code ${a.exit_code===0?"ok":"fail"}">${a.exit_code===0?"ok":"exit "+a.exit_code}</span>
+        <span class="ms">${a.duration_ms} ms</span>
+        <span class="sum">${esc(a.summary)}</span>
+      </li>`).join("");
+    const gaveUp = sb.repair_attempts >= data.max_attempts
+      ? `<div class="gaveup">Gave up: repair cap reached (${sb.repair_attempts}/${data.max_attempts}). Last error is shown in the trace and logs.</div>` : "";
+
+    el.innerHTML = `
+      <div class="panel">
+        <div class="head">
+          <span class="dot ${esc(sb.status)}" aria-hidden="true"></span>
+          <span class="name">${esc(sb.project_id)}</span>
+          <span class="tag">${esc(sb.lang)}</span>
+          <span class="tag">${sb.driver === "mac" ? "EC2 Mac" : "Docker"}</span>
+          <span class="statusword">${statusWord(sb.status)}</span>
+        </div>
+        ${pips(sb)}
+        ${gaveUp}
+        <h2 style="margin-top:16px">Repair loop trace</h2>
+        <ul class="trace">${trace || `<li class="muted" style="grid-template-columns:1fr;border:0">No runs yet.</li>`}</ul>
+      </div>
+      <div class="panel">
+        <h2>Logs</h2>
+        <div class="tabs" role="tablist">
+          ${["build","test","exec"].map(k =>
+            `<button role="tab" aria-selected="${k===logKind}" data-kind="${k}">${k[0].toUpperCase()+k.slice(1)}</button>`).join("")}
+        </div>
+        <pre class="log" id="log" tabindex="0">Loading…</pre>
+      </div>`;
+    el.querySelectorAll(".tabs button").forEach(b =>
+      b.addEventListener("click", () => { logKind = b.dataset.kind; renderDetail(); loadLogs(); }));
+  }
+
+  async function loadLogs(){
+    if (!selected) return;
+    const logEl = $("#log");
+    if (!logEl) return;
+    try{
+      const r = await fetch(`/api/logs?id=${selected}&kind=${logKind}`);
+      const j = await r.json();
+      const entry = j.logs && j.logs[logKind];
+      const stick = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 8;
+      logEl.textContent = entry ? entry.lines.join("\n")
+        : `No ${logKind} runs captured yet.`;
+      if (stick) logEl.scrollTop = logEl.scrollHeight;
+    }catch{ logEl.textContent = "Log fetch failed — is the server running?"; }
+  }
+
+  function render(){ renderCosts(); renderCards(); renderDetail(); }
+
+  async function poll(){
+    try{
+      const r = await fetch("/api/sandboxes");
+      data = await r.json();
+      if (!selected && data.sandboxes.length) selected = data.sandboxes[0].id;
+      render(); loadLogs();
+    }catch{ /* server restarting; keep last view */ }
+  }
+
+  poll();
+  setInterval(poll, 2000);
+})();
+</script>
+</body>
+</html>
