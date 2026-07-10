@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🧪 ultra-sandbox
+# 🧰 ultra-sandbox
 
 **Real build-and-run sandboxes for Claude — every language, plus Xcode on a remote AWS Mac, with a live dashboard.**
 
 [![CI](https://github.com/mephisto1122/ultra-sandbox/actions/workflows/ci.yml/badge.svg)](https://github.com/mephisto1122/ultra-sandbox/actions/workflows/ci.yml)
 [![22 languages](https://img.shields.io/badge/languages-22-3776AB)](LANGUAGES.md)
 [![Docker](https://img.shields.io/badge/local-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![MCP](https://img.shields.io/badge/protocol-MCP-000000?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
+[![MCP](https://img.shields.io/badge/protocol-MCP-555555)](https://modelcontextprotocol.io/)
 [![AWS EC2 Mac](https://img.shields.io/badge/Xcode-EC2%20Mac-FF9900?logo=amazonwebservices&logoColor=white)](https://aws.amazon.com/ec2/instance-types/mac/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
