@@ -22,18 +22,55 @@ across 22 languages locally and Swift/Xcode on a remote Apple machine.
 
 ## What it gives Claude
 
-| | |
+**22 languages, each in its own toolchain container:**
+
+<div align="center">
+
+![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)
+![C](https://img.shields.io/badge/C-A8B9CC?logo=c&logoColor=black)
+![C++](https://img.shields.io/badge/C%2B%2B-00599C?logo=cplusplus&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)
+![Zig](https://img.shields.io/badge/Zig-F7A41D?logo=zig&logoColor=white)
+![Haskell](https://img.shields.io/badge/Haskell-5D4F85?logo=haskell&logoColor=white)
+![Crystal](https://img.shields.io/badge/Crystal-000000?logo=crystal&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift-F05138?logo=swift&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-5FA04E?logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Deno](https://img.shields.io/badge/Deno-70FFAF?logo=deno&logoColor=black)
+![Ruby](https://img.shields.io/badge/Ruby-CC342D?logo=ruby&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-777BB4?logo=php&logoColor=white)
+![Perl](https://img.shields.io/badge/Perl-39457E?logo=perl&logoColor=white)
+![Lua](https://img.shields.io/badge/Lua-2C2D72?logo=lua&logoColor=white)
+![Elixir](https://img.shields.io/badge/Elixir-4B275F?logo=elixir&logoColor=white)
+![JVM](https://img.shields.io/badge/JVM-437291?logo=openjdk&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?logo=kotlin&logoColor=white)
+![Scala](https://img.shields.io/badge/Scala-DC322F?logo=scala&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)
+
+</div>
+
+**Plus Xcode / Swift on a remote AWS Mac** — the one thing that can't run in a Linux container:
+
+[![Xcode](https://img.shields.io/badge/Xcode-147EFB?logo=xcode&logoColor=white)](https://developer.apple.com/xcode/)
+[![Swift](https://img.shields.io/badge/Swift-F05138?logo=swift&logoColor=white)](https://swift.org/)
+[![AWS EC2 Mac](https://img.shields.io/badge/EC2%20Mac-FF9900?logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/instance-types/mac/)
+
+`swift` · `xcodeproj` · `objc` built over SSH on an EC2 Mac dedicated host.
+
+**And the machinery that makes it a loop, not a one-shot:**
+
+| Capability | What it does |
 |---|---|
-| 🌍 **22 languages, locally** | go · c · cpp · rust · zig · haskell · crystal · swiftpm · python · node · typescript · deno · ruby · php · perl · lua · elixir · jvm · kotlin · scala · dotnet · dart — each in its own toolchain container |
-| 🍎 **Xcode / Swift on a remote AWS Mac** | `swift` · `xcodeproj` · `objc` built over SSH on an EC2 Mac — the one thing that *can't* run in a Linux container |
-| 🔁 **A real repair loop** | build → read stderr → patch → rebuild, until green or a hard cap says **"gave up"** — loudly, never silently |
-| 📚 **Docs search** | current first-party docs mid-loop, so Claude checks the API instead of guessing |
-| 📊 **Live dashboard** | `localhost:8787` — every sandbox, its status, logs, the repair-loop trace, and the Mac-host cost clock |
+| **Repair loop** | build → read stderr → patch → rebuild, until green or a hard cap says "gave up" — loudly, never silently |
+| **Docs search** | pulls current first-party docs mid-loop, so Claude checks the real API instead of guessing |
+| **Live dashboard** | `localhost:8787` — every sandbox, its status, logs, the repair-loop trace, and the Mac-host cost clock |
 
 Each sandbox spins up per session and is torn down when you're done. It runs on your
 machine with sensible isolation (network-off by default, dropped privileges, read-only
-rootfs) so you can actually trust it — the details are in [SECURITY.md](SECURITY.md),
-but the point of the tool is the capability above, not the sandboxing.
+rootfs) so you can actually trust it — details in [SECURITY.md](SECURITY.md), but the
+point of the tool is the capability above, not the sandboxing.
 
 ## Under the hood
 
