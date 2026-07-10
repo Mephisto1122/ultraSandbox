@@ -34,10 +34,10 @@ mcpb pack .            # produces ultra-sandbox.mcpb
 ## Install it
 
 1. Open Claude Desktop → **Settings → Extensions**.
-2. **Advanced settings → Extension Developer → "Install Extension…"**
-   (or just drag `ultra-sandbox.mcpb` onto the Settings window).
-3. In the review dialog you'll see the extension name, description, and its tools. Fill in
-   the optional fields:
+2. Click **Advanced settings**, then **Install Extension…** (add custom) — or just
+   drag `ultra-sandbox.mcpb` straight onto the Settings window.
+3. Select the `ultra-sandbox.mcpb` file. In the review dialog you'll see the extension
+   name, description, and its tools. Fill in the optional fields:
    - **Config file** — point at your `config.toml` if you edited one (needed before the Mac
      driver works). Leave blank to use defaults.
    - **Brave Search API key** — paste it to enable `search_docs`. Stored in the keychain.

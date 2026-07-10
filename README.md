@@ -50,20 +50,44 @@ so the choice is always explicit.
 
 Full threat model: [SECURITY.md](SECURITY.md).
 
-## Quick start
+## Install
+
+**Prerequisites:** Docker Desktop running, plus [`uv`](https://docs.astral.sh/uv/)
+on your PATH (the extension uses it to install Python deps). On Windows:
+`winget install astral-sh.uv`.
+
+### Recommended: one-click Desktop Extension (`.mcpb`)
+
+Build the bundle once:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ultra-sandbox.git
+npm install -g @anthropic-ai/mcpb
+git clone https://github.com/mephisto1122/ultra-sandbox.git
+cd ultra-sandbox
+mcpb pack .          # produces ultra-sandbox.mcpb
+```
+
+Then in Claude Desktop: **Settings → Extensions → Advanced settings →
+Install Extension…**, and select `ultra-sandbox.mcpb` (or just drag the file
+onto the Settings window). Fill in the optional fields — config path, Brave API
+key (stored in your OS keychain), dashboard port — and install. Details:
+[INSTALL-EXTENSION.md](INSTALL-EXTENSION.md).
+
+> Use the **Extensions** page, not "Add custom connector." Custom connectors are
+> for *remote* servers reached from Anthropic's cloud; ultra-sandbox is local
+> and drives your own Docker/SSH, so it installs as a Desktop Extension.
+
+### Alternative: config file (Claude Code, or if you skip the bundle)
+
+```bash
+git clone https://github.com/mephisto1122/ultra-sandbox.git
 cd ultra-sandbox
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
 cp config.example.toml config.toml
 ```
 
-Register with your MCP client:
-
-**Claude Desktop** (`claude_desktop_config.json`, or package as a Desktop Extension —
-see [INSTALL-EXTENSION.md](INSTALL-EXTENSION.md)):
+Add to `claude_desktop_config.json` (Claude Desktop) or `.mcp.json` (Claude Code):
 
 ```json
 {
@@ -76,8 +100,6 @@ see [INSTALL-EXTENSION.md](INSTALL-EXTENSION.md)):
   }
 }
 ```
-
-**Claude Code** (`.mcp.json` in your project, same block).
 
 On first launch the dashboard comes up at **http://localhost:8787**; toolchain images
 build lazily on first use.
