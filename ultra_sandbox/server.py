@@ -52,15 +52,22 @@ def create_sandbox(project_id: str, lang: str, deps: list[str] | None = None,
                    allow_network: bool = False) -> dict:
     """Create a session-scoped, isolated sandbox for a project.
 
-    Docker languages (local containers): go, cpp, node, python, rust, jvm, ruby,
-    php, dotnet. Mac languages (remote EC2 Mac over SSH): swift (SwiftPM),
+    Docker languages (local containers): go, c, cpp, rust, zig, haskell, crystal,
+    swiftpm, python, node, typescript, deno, ruby, php, perl, lua, elixir, jvm,
+    kotlin, scala, dotnet, dart. Mac languages (remote EC2 Mac over SSH): swift,
     xcodeproj, objc.
 
-    Security defaults: containers run with NO network, a read-only root
-    filesystem, all capabilities dropped, and are destroyed when the session
-    ends. Set allow_network=true only when the toolchain must download
-    dependencies (required for node/jvm/ruby/php/dotnet standard builds, or
-    when passing `deps`). Returns sandbox_id used by every other tool.
+    Network: sandboxes are isolated by default. **Pass allow_network=true whenever
+    the project needs to reach the internet** — cloning a git repo, or installing
+    libraries (pip/npm/cargo/go get/gem/composer/mix/gradle/dotnet restore, and
+    any git-based dependency). git is preinstalled in every image. Toolchains
+    whose standard build downloads dependencies (rust, node, jvm, and others) are
+    refused without it, with a clear message. Leave it false only for
+    self-contained code that needs no downloads.
+
+    Security when network is on: the container still runs with dropped
+    capabilities, no-new-privileges, a read-only root filesystem, and resource
+    limits — network access widens only outbound reachability. Returns sandbox_id.
     """
     try:
         driver_name, driver = router.for_lang(lang)

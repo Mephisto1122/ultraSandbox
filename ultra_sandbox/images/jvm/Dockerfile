@@ -1,5 +1,8 @@
 # ultra-sandbox/jvm - JDK 21 + Gradle
 FROM gradle:8-jdk21
+# ultra-sandbox: ensure git is available for clones + git-based dependencies
+USER root
+RUN (command -v apt-get >/dev/null 2>&1 && apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*) || (command -v apk >/dev/null 2>&1 && apk add --no-cache git ca-certificates) || true
 RUN mkdir -p /work && chown gradle /work
 USER gradle
 WORKDIR /work

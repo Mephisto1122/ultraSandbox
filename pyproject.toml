@@ -1,6 +1,6 @@
 [project]
 name = "ultra-sandbox"
-version = "0.3.0"
+version = "0.4.0"
 description = "MCP server giving Claude a persistent, multi-language build/test/repair loop (local Docker + remote EC2 Mac), with a status dashboard and docs search."
 requires-python = ">=3.11"
 dependencies = [

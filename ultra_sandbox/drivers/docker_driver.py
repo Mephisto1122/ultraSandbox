@@ -103,17 +103,20 @@ class DockerDriver(Driver):
 
     def create(self, sb: Sandbox, deps: list[str] | None, allow_network: bool = False) -> None:
         sec = self.config["security"]
-        if deps and not allow_network and sec["network"] == "none":
+        default_net = sec.get("default_network", "none")
+        # Resolve the effective network:
+        #   allow_network=True  -> always bridge (explicit request)
+        #   allow_network=False -> the configured default (none, or bridge if the
+        #                          user opted their whole setup into network-on)
+        net_on = allow_network or default_net == "bridge"
+
+        needs_net = bool(deps) or sb.lang in NETWORK_HUNGRY
+        if needs_net and not net_on:
+            what = "installing `deps`" if deps else f"the standard {sb.lang!r} build"
             raise DriverError(
-                "This sandbox has no network (security default), so `deps` cannot be "
-                "installed. Recreate with allow_network=true if dependency downloads "
-                "are needed."
-            )
-        if sb.lang in NETWORK_HUNGRY and not allow_network and sec["network"] == "none":
-            raise DriverError(
-                f"The standard {sb.lang!r} build fetches dependencies from the network, "
-                "but sandboxes are network-isolated by default. Recreate with "
-                "allow_network=true to permit outbound access for this sandbox only."
+                f"{what} needs to download from the network (git / package registry), "
+                "but this sandbox is isolated. Recreate with allow_network=true (or set "
+                "[security].default_network = \"bridge\" to allow downloads by default)."
             )
 
         self._ensure_image(sb.lang)
@@ -125,7 +128,7 @@ class DockerDriver(Driver):
         if vol.exit_code != 0:
             raise DriverError(f"docker volume create failed: {vol.stderr.strip()}")
 
-        network = "bridge" if allow_network else sec["network"]
+        network = "bridge" if net_on else "none"
         argv = [
             "docker", "run", "-d", "--name", name,
             "--network", network,

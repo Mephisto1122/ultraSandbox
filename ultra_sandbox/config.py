@@ -29,6 +29,11 @@ DEFAULTS: dict[str, Any] = {
         # Default container network: "none" = no network at all.
         # create_sandbox(allow_network=True) opts a single sandbox into "bridge".
         "network": "none",
+        # Default network for sandboxes created WITHOUT an explicit allow_network:
+        #   "none"   — isolated; builds that fetch deps must pass allow_network=true
+        #   "bridge" — full internet by default (git clone, pip/npm/cargo/go get all
+        #              work out of the box). Convenient; less isolated.
+        "default_network": "none",
         # Immutable root filesystem; only /work (volume) and /tmp (tmpfs) are writable.
         "read_only_rootfs": True,
         "pids_limit": 512,
@@ -58,13 +63,19 @@ DEFAULTS: dict[str, Any] = {
 }
 
 
+import copy
+
+
 def _deep_merge(base: dict, override: dict) -> dict:
-    out = dict(base)
+    # Deep-copy the base so the returned config never shares nested dict
+    # references with module-level DEFAULTS — otherwise mutating a loaded config
+    # would silently alter the defaults for every later load.
+    out = copy.deepcopy(base)
     for k, v in override.items():
         if isinstance(v, dict) and isinstance(out.get(k), dict):
             out[k] = _deep_merge(out[k], v)
         else:
-            out[k] = v
+            out[k] = copy.deepcopy(v)
     return out
 
 

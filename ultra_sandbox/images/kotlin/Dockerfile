@@ -1,5 +1,8 @@
 # ultra-sandbox/kotlin
 FROM gradle:8-jdk21
+# ultra-sandbox: ensure git is available for clones + git-based dependencies
+USER root
+RUN (command -v apt-get >/dev/null 2>&1 && apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*) || (command -v apk >/dev/null 2>&1 && apk add --no-cache git ca-certificates) || true
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends unzip curl \
     && curl -sSL https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip -o /tmp/k.zip \

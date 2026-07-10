@@ -82,3 +82,21 @@ def test_destroy_removes_container_and_volume(isolated_config):
     flat = [" ".join(c) for c in d.calls]
     assert any(s.startswith("docker rm -f us_") for s in flat)
     assert any(s.startswith("docker volume rm -f us_") for s in flat)
+
+
+def test_default_network_bridge_allows_downloads(isolated_config):
+    """With default_network=bridge, a sandbox gets network without allow_network,
+    so git clone / dep installs work out of the box."""
+    isolated_config._raw["security"]["default_network"] = "bridge"
+    d = CapturingDriver(isolated_config)
+    sb = Sandbox(project_id="p", lang="node", driver="docker")  # network-hungry
+    d.create(sb, None)  # no allow_network needed now
+    assert sb.meta["network"] == "bridge"
+
+
+def test_git_installed_in_every_image():
+    """git must be present in every image so clones + git-based deps work."""
+    from pathlib import Path
+    images = Path(__file__).resolve().parent.parent / "ultra_sandbox" / "images"
+    for df in images.glob("*/Dockerfile"):
+        assert "git" in df.read_text(), f"{df.parent.name}: no git in image"
