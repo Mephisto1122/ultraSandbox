@@ -50,48 +50,27 @@ CACHE_ENV = {
     "BUNDLE_PATH": f"{SANDBOX_HOME}/.bundle",
     "COMPOSER_HOME": f"{SANDBOX_HOME}/.composer",
     "XDG_CACHE_HOME": f"{SANDBOX_HOME}/.cache",
+    "DENO_DIR": f"{SANDBOX_HOME}/.cache/deno",
+    "PUB_CACHE": f"{SANDBOX_HOME}/.pub-cache",
+    "MIX_HOME": f"{SANDBOX_HOME}/.mix",
+    "HEX_HOME": f"{SANDBOX_HOME}/.hex",
+    "CABAL_DIR": f"{SANDBOX_HOME}/.cabal",
+    "STACK_ROOT": f"{SANDBOX_HOME}/.stack",
+    "DOTNET_CLI_HOME": f"{SANDBOX_HOME}/.dotnet",
+    "CRYSTAL_CACHE_DIR": f"{SANDBOX_HOME}/.cache/crystal",
+    "SWIFTPM_CACHE": f"{SANDBOX_HOME}/.swiftpm",
 }
 
-BUILD_CMDS: dict[str, str] = {
-    "go":     "go build ./...",
-    "cpp":    "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build -j",
-    "node":   "npm install --no-audit --no-fund && npm run build --if-present",
-    "python": "if [ -f requirements.txt ]; then pip install --user -q -r requirements.txt; fi; "
-              "if [ -f pyproject.toml ]; then pip install --user -q -e . || true; fi; "
-              "python -m compileall -q .",
-    "rust":   "cargo build",
-    "jvm":    "gradle --no-daemon assemble",
-    "ruby":   "if [ -f Gemfile ]; then bundle install --quiet; fi; ruby -c $(find . -name '*.rb' | head -50)",
-    "php":    "if [ -f composer.json ]; then composer install --quiet; fi; "
-              "for f in $(find . -name '*.php'); do php -l \"$f\" || exit 1; done",
-    "dotnet": "dotnet build",
-}
+from ..languages import LANGUAGES
 
-TEST_CMDS: dict[str, str] = {
-    "go":     "go test ./...",
-    "cpp":    "ctest --test-dir build --output-on-failure",
-    "node":   "npm test --silent",
-    "python": "python -m pytest -q",
-    "rust":   "cargo test",
-    "jvm":    "gradle --no-daemon test",
-    "ruby":   "if [ -f Rakefile ]; then rake test; else ruby -Itest test/*_test.rb; fi",
-    "php":    "./vendor/bin/phpunit || phpunit",
-    "dotnet": "dotnet test",
-}
 
-TEST_FILTER_CMDS: dict[str, str] = {
-    "go":     "go test ./... -run {f}",
-    "cpp":    "ctest --test-dir build --output-on-failure -R {f}",
-    "node":   "npm test --silent -- {f}",
-    "python": "python -m pytest -q -k {f}",
-    "rust":   "cargo test {f}",
-    "jvm":    "gradle --no-daemon test --tests {f}",
-    "dotnet": "dotnet test --filter {f}",
-}
+def _sub(template: str, **kw) -> str:
+    for k, v in kw.items():
+        template = template.replace("{" + k + "}", v)
+    return template
 
-# Languages whose *standard build command* needs the network (dep fetch at
-# build time). Used only to produce a clearer error message up front.
-NETWORK_HUNGRY = {"node", "jvm", "ruby", "php", "dotnet"}
+
+NETWORK_HUNGRY = {n for n, s in LANGUAGES.items() if s.network_build}
 
 
 class DockerDriver(Driver):
@@ -241,21 +220,22 @@ class DockerDriver(Driver):
         ])
 
     def build(self, sb: Sandbox, target: str | None) -> RunResult:
-        cmd = BUILD_CMDS.get(sb.lang)
-        if cmd is None:
+        spec = LANGUAGES.get(sb.lang)
+        if spec is None:
             raise DriverError(f"No build command defined for {sb.lang!r}.")
-        if target and sb.lang not in ("go", "cpp"):
+        cmd = spec.build
+        if target:
             cmd = f"{cmd} {shlex.quote(target)}"
         return self._exec_in(sb, cmd)
 
     def test(self, sb: Sandbox, filter: str | None) -> RunResult:
-        if filter:
-            tmpl = TEST_FILTER_CMDS.get(sb.lang)
-            cmd = tmpl.format(f=shlex.quote(filter)) if tmpl else TEST_CMDS[sb.lang]
-        else:
-            cmd = TEST_CMDS.get(sb.lang)
-        if cmd is None:
+        spec = LANGUAGES.get(sb.lang)
+        if spec is None:
             raise DriverError(f"No test command defined for {sb.lang!r}.")
+        if filter and spec.test_filter:
+            cmd = _sub(spec.test_filter, filter=shlex.quote(filter))
+        else:
+            cmd = spec.test
         return self._exec_in(sb, cmd)
 
     def exec(self, sb: Sandbox, cmd: str) -> RunResult:
@@ -264,13 +244,8 @@ class DockerDriver(Driver):
 
 
 def _dep_installer(lang: str, deps: list[str]) -> str | None:
+    spec = LANGUAGES.get(lang)
+    if not spec or not spec.dep_add:
+        return None
     quoted = " ".join(shlex.quote(d) for d in deps)
-    return {
-        "go":     f"go get {quoted}",
-        "node":   f"npm install --no-audit --no-fund {quoted}",
-        "python": f"pip install --user -q {quoted}",
-        "rust":   f"cargo add {quoted}",
-        "ruby":   f"gem install {quoted}",
-        "php":    f"composer require {quoted}",
-        "dotnet": " && ".join(f"dotnet add package {shlex.quote(d)}" for d in deps),
-    }.get(lang)
+    return _sub(spec.dep_add, deps=quoted)

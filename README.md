@@ -28,7 +28,7 @@ for the current session.
 
 | | |
 |---|---|
-| 🐳 **Docker driver** (local) | go · cpp · node · python · rust · jvm · ruby · php · dotnet |
+| 🐳 **Docker driver** (local, 22 languages) | go · c · cpp · rust · zig · haskell · crystal · swiftpm · python · node · typescript · deno · ruby · php · perl · lua · elixir · jvm · kotlin · scala · dotnet · dart |
 | 🍎 **SSH-Mac driver** (remote EC2 Mac) | swift (SwiftPM) · xcodeproj · objc |
 | 📚 **Docs search** | allowlisted first-party documentation, cached per session |
 | 📊 **Dashboard** | `localhost:8787` — sandboxes, logs, repair-loop trace, Mac cost clock |
@@ -113,7 +113,7 @@ block"* against your configured hourly rate.
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 14 tests, including one that asserts every hardening flag
+pytest -q          # 41 tests: hardening flags, per-language dispatch, repair loop
 ```
 
 CI (GitHub Actions) runs the suite on Python 3.11–3.13 and builds all six toolchain

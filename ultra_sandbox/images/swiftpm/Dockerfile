@@ -1,5 +1,5 @@
-# ultra-sandbox/rust
-FROM rust:1.84-slim-bookworm
+# ultra-sandbox/swiftpm  (Swift Package Manager on Linux)
+FROM swift:5.10
 RUN useradd -m sandbox && mkdir -p /work && chown sandbox /work
 USER sandbox
 WORKDIR /work

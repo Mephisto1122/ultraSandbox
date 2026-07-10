@@ -15,11 +15,7 @@ STATUS_PASSING = "passing"
 STATUS_FAILING = "failing"
 STATUS_DESTROYED = "destroyed"
 
-DOCKER_LANGS = {
-    "go", "cpp", "node", "python", "rust", "jvm",
-    "ruby", "php", "dotnet",
-}
-MAC_LANGS = {"swift", "objc", "xcodeproj"}
+from .languages import DOCKER_LANGS, MAC_LANGS  # single source of truth
 
 
 def driver_for_lang(lang: str) -> str:
