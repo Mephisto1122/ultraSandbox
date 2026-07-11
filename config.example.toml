@@ -15,13 +15,8 @@ image_prefix = "ultra-sandbox" # images are tagged ultra-sandbox/<lang>
 
 [security]
 ephemeral = true             # destroy all sandboxes on exit; reap stale ones at startup
-network = "none"             # legacy container default (kept for compatibility)
-default_network = "none"     # network for sandboxes created WITHOUT allow_network:
-                             #   "none"   = isolated; downloads need allow_network=true
-                             #   "bridge" = full internet by default (git clone + all
-                             #              package installs just work). Convenient,
-                             #              less isolated. Claude can still request
-                             #              network per-sandbox via allow_network=true.
+network = "none"             # container default: no network. Per-sandbox opt-in via
+                             # create_sandbox(allow_network=true) switches that one to "bridge".
 read_only_rootfs = true      # immutable rootfs; only /work (volume) and /tmp (tmpfs) writable
 pids_limit = 512             # fork-bomb guard
 tmpfs_size = "512m"          # size cap for /tmp inside containers
