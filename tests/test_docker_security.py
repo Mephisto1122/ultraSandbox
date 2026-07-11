@@ -100,3 +100,29 @@ def test_git_installed_in_every_image():
     images = Path(__file__).resolve().parent.parent / "ultra_sandbox" / "images"
     for df in images.glob("*/Dockerfile"):
         assert "git" in df.read_text(), f"{df.parent.name}: no git in image"
+
+
+def test_uses_non_login_shell_and_pins_path(isolated_config):
+    """Regression: `sh -lc` re-sources /etc/profile and resets PATH, which made
+    go/cargo 'not found' even though the binaries existed. Must use `sh -c` and
+    pass an explicit PATH covering the toolchain dirs."""
+    from ultra_sandbox.drivers.docker_driver import SANDBOX_PATH
+
+    d = CapturingDriver(isolated_config)
+    sb = Sandbox(project_id="p", lang="go", driver="docker")
+    d.create(sb, None)
+    argv = _run_argv(d)
+
+    # PATH is injected into the container env...
+    env = [argv[i + 1] for i, a in enumerate(argv) if a == "-e"]
+    path_var = next(e for e in env if e.startswith("PATH="))
+    for needed in ("/usr/local/go/bin", "/usr/local/cargo/bin", "/work/.home/.local/bin"):
+        assert needed in path_var, f"PATH missing {needed}"
+
+    # ...and commands run in a NON-login shell.
+    d.build(sb, None)
+    exec_calls = [c for c in d.calls if c[:2] == ["docker", "exec"]]
+    shells = [c for c in exec_calls if "sh" in c]
+    assert shells, "no shell exec captured"
+    for c in shells:
+        assert "-lc" not in c, "login shell (-lc) resets PATH — must use -c"

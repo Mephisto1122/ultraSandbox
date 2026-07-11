@@ -35,10 +35,32 @@ IMAGES_DIR = Path(__file__).resolve().parent.parent / "images"
 WORKDIR = "/work"
 SANDBOX_HOME = "/work/.home"
 
+# PATH fix (see #go/#rust "binary exists but not found"):
+# We override HOME to /work/.home so caches persist in the volume. But a *login*
+# shell re-sources /etc/profile and can reset PATH, dropping the toolchain dirs
+# the base images set via ENV (golang -> /usr/local/go/bin, rust ->
+# /usr/local/cargo/bin, etc.). We therefore (a) run commands with `sh -c`, not
+# `sh -lc`, and (b) pin an explicit PATH that includes every toolchain bin dir
+# plus the user-install bin dir under the new HOME (so `pip install --user`
+# tools such as pytest are on PATH).
+TOOLCHAIN_PATHS = [
+    f"{SANDBOX_HOME}/.local/bin",     # pip --user (pytest, etc.)
+    f"{SANDBOX_HOME}/.cargo/bin",     # cargo-installed binaries
+    f"{SANDBOX_HOME}/go/bin",         # go install
+    "/usr/local/go/bin",              # golang image
+    "/usr/local/cargo/bin",           # rust image
+    "/usr/local/rustup/bin",
+    "/opt/zig", "/opt/kotlinc/bin",   # our custom images
+    "/usr/local/sbin", "/usr/local/bin",
+    "/usr/sbin", "/usr/bin", "/sbin", "/bin",
+]
+SANDBOX_PATH = ":".join(TOOLCHAIN_PATHS)
+
 # Toolchain caches redirected under the writable volume so a read-only rootfs
 # never breaks a build.
 CACHE_ENV = {
     "HOME": SANDBOX_HOME,
+    "PATH": SANDBOX_PATH,
     "GOPATH": f"{SANDBOX_HOME}/go",
     "GOCACHE": f"{SANDBOX_HOME}/.cache/go-build",
     "CARGO_HOME": f"{SANDBOX_HOME}/.cargo",
@@ -217,9 +239,11 @@ class DockerDriver(Driver):
         return name
 
     def _exec_in(self, sb: Sandbox, shell_cmd: str) -> RunResult:
+        # `sh -c`, not `sh -lc`: a login shell re-sources /etc/profile and would
+        # reset PATH, losing the toolchain dirs (the go/cargo "not found" bug).
         return self._run_local([
             "docker", "exec", "-w", WORKDIR, self._container(sb),
-            "sh", "-lc", shell_cmd,
+            "sh", "-c", shell_cmd,
         ])
 
     def build(self, sb: Sandbox, target: str | None) -> RunResult:

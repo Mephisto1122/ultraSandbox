@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "ultra-sandbox",
   "display_name": "Ultra-sandbox",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Persistent multi-language build/test/repair sandbox for Claude (local Docker + remote EC2 Mac), with a status dashboard and allowlisted docs search.",
   "long_description": "Ultra-sandbox gives Claude a persistent build \u2192 test \u2192 repair loop across many languages. Claude writes code, the sandbox builds and tests it in an isolated environment, structured logs come back, and Claude patches until the build is green or a hard attempt cap is reached. Portable toolchains (go, cpp, node, python, rust, jvm, ruby, php, dotnet) run in local Docker containers; Swift/Objective-C/Xcode targets run over SSH on an EC2 Mac dedicated host. A read-only dashboard at http://localhost:8787 shows sandboxes, logs, the repair-loop trace, and a Mac-host cost clock. A docs-search tool looks up current first-party framework documentation so Claude checks the docs instead of guessing.",
   "author": {
